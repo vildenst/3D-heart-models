@@ -1,0 +1,122 @@
+# /scratch/groups/ntrayan1/local/carp/1.8.0/bin/carp +F /home-2/hareval1@jhu.edu/work/project_ablation_rule/hiroshi_human/template/base.par 
+
+#Don't change anything below this line
+dt                    =   25                               # time step size in us
+
+num_external_imp            = 1                 #Load custom ionic model
+external_imp[0]             = /usit/abel/u1/harevalo/single_cell/TT_ISCH.so
+
+num_imp_regions             = 7
+imp_region[0].name          = "normal"
+imp_region[0].im            = "TT_ISCH"            # Augmented LRDII
+imp_region[0].num_IDs         = 1
+imp_region[0].ID[0]         = 1
+#imp_region[0].im_sv_init    = /usit/abel/u1/harevalo/single_cell/isch.sv
+imp_region[0].im_param      = "cell_type=2,Gkr=.172,Gks=.441,GpCa=.8666,GpK=.00219"
+
+imp_region[1].name          = "intermediate"
+imp_region[1].im            = "TT_ISCH"            # Augmented LRDII
+imp_region[1].num_IDs         = 1
+imp_region[1].ID[0]         = 2
+#imp_region[1].im_sv_init    = /usit/abel/u1/harevalo/single_cell/isch.sv
+imp_region[1].im_param      = "cell_type=2,jb_Ina*.8,jb_Ical*.8,Gkr=.172,Gks=.441,GpCa=.8666,GpK=.00219,Ko=7.5,fATP=.0049"
+
+imp_region[2].im            = "TT_ISCH"            # Augmented LRDII
+imp_region[2].num_IDs         = 1
+imp_region[2].ID[0]         = 3
+#imp_region[2].im_sv_init    = /usit/abel/u1/harevalo/single_cell/isch.sv
+imp_region[2].im_param      = "cell_type=2,jb_Ina*.8,jb_Ical*.8,Gkr=.172,Gks=.441,GpCa=.8666,GpK=.00219,Ko=7.5,fATP=.0049"
+
+imp_region[3].name          = "infarct"
+imp_region[3].im            = "TT_ISCH"            # Augmented LRDII
+imp_region[3].num_IDs         = 1
+imp_region[3].ID[0]         = 4
+#imp_region[3].im_sv_init    = /usit/abel/u1/harevalo/single_cell/isch.sv
+imp_region[3].im_param      = "cell_type=2,jb_Ina*.8,jb_Ical*.8,Gkr=.172,Gks=.441,GpCa=.8666,GpK=.00219,Ko=8,fATP=.0049"
+
+imp_region[4].name          = "infarct"
+imp_region[4].im            = "TT_ISCH"            # Augmented LRDII
+imp_region[4].num_IDs         = 1
+imp_region[4].ID[0]         = 5
+#imp_region[4].im_sv_init    = /usit/abel/u1/harevalo/single_cell/isch.sv
+imp_region[4].im_param      = "cell_type=2,jb_Ina*.7,jb_Ical*.7,Gkr=.172,Gks=.441,GpCa=.8666,GpK=.00219,Ko=8.5,fATP=.0049"
+
+imp_region[5].name          = "infarct"
+imp_region[5].im            = "TT_ISCH"            # Augmented LRDII
+imp_region[5].num_IDs         = 1
+imp_region[5].ID[0]         = 6  
+#imp_region[5].im_sv_init    = /usit/abel/u1/harevalo/single_cell/isch.sv
+imp_region[5].im_param      = "cell_type=2,jb_Ina*.7,jb_Ical*.7,Gkr=.172,Gks=.441,GpCa=.8666,GpK=.00219,Ko=9,fATP=.0049"
+
+imp_region[6].name          = "infarct"
+imp_region[6].im            = "TT_ISCH"            # Augmented LRDII
+imp_region[6].num_IDs       = 1
+imp_region[6].ID[0]         = 7
+#imp_region[6].im_sv_init    = /usit/abel/u1/harevalo/single_cell/isch.sv
+imp_region[6].im_param      = "cell_type=2,jb_Ina*.7,jb_Ical*.7,Gkr=.172,Gks=.441,GpCa=.8666,GpK=.00219,Ko=10,fATP=.0049" 
+
+
+num_gregions           = 1
+
+# "healthy" heart
+#gregion[0].description = "heart"
+gregion[0].g_il        = 0.204
+gregion[0].g_it        = 0.062
+gregion[0].num_IDs     =   7
+gregion[0].ID[0]       = 2
+gregion[0].ID[1] = 3
+gregion[0].ID[2] = 4 
+gregion[0].ID[3] = 5
+gregion[0].ID[4] = 6
+gregion[0].ID[5] = 7
+gregion[0].ID[6] = 1
+
+# Infarct regions
+#gregion[1].description = "intermediate"
+#gregion[1].g_il        =   0.255         # standard g_il/10
+#gregion[1].g_it        =   0.0775
+#gregion[1].g_in        =   0.04
+#gregion[1].num_IDs     =   1
+#gregion[1].ID[0]       = 128
+
+#gregion[2].g_il        =   0.255       # standard g_il/100
+#gregion[2].g_it        =   0.0775
+#gregion[2].g_in        =   0
+#gregion[2].num_IDs     = 2
+#gregion[2].ID[0]       = 255
+#gregion[2].ID[1]       = 300
+
+# stimulation protocol definition
+# ___________________________________________________
+#
+
+# I/O
+# ___________________________________________________
+#
+#gridout_i            = 2
+#gridout_e            = 2
+timedt               = 10
+
+# geometric data 
+experiment           = 0
+
+# Solution process 
+# ___________________________________________________
+#
+#CN_parab             =  1
+mat_entries_per_row  = 90
+cg_tol_ellip         =  1e-4
+bidomain = 0
+purkEleType          =  0			   # no purkinje fibers
+vm_per_phie = 2
+#parab_solve = 1           # CN is on
+#mass_lumping = 0
+
+num_LATs=1
+lats[0].measurand = 0
+lats[0].all = 1
+lats[0].threshold = 0.0
+lats[0].method = 1
+
+#phie_rec_ptf = /usit/abel/u1/harevalo/harevalo/project_cabo/template/ecg_points
+#post_processing_opts = 1                       # post-process file to recover phie

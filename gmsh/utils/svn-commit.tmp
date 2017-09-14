@@ -1,0 +1,4 @@
+package source
+--This line, and those below, will be ignored--
+
+M    misc/package_gmsh_getdp.sh
