@@ -1,5 +1,3 @@
-# 3D-heart-models
-
 # Pipeline for patient specific 3D heart models #
 
 This manual is based on the user having access to [Abel](http://www.uio.no/english/services/it/research/hpc/abel/), a computer cluster with Linux OS. A description of the different files and folders can be found in **Manual/files&folders.md**. An introduction to cardiology is available in **Manual/Cardiology.pdf**.
