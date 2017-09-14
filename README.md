@@ -2,8 +2,8 @@
 
 This manual is based on the user having access to [Abel](http://www.uio.no/english/services/it/research/hpc/abel/), a computer cluster with Linux OS. A description of the different files and folders can be found in **Manual/files&folders.md**. An introduction to cardiology is available in **Manual/Cardiology.pdf**.
 Clone and access this repository from a suitable location on your Abel account by the following commands:
-1. ```$git clone https://github.com/vildenst/In_Silico_Heart_Models.git```.
-2. ```$cd In_Silico_Heart_Models```.
+1. ```$git clone https://github.com/vildenst/3D-heart-models.git```.
+2. ```$cd 3D-heart-models```.
 
 ## Step 1: Software requirements ##
 * On your computer: A Windows virtual machine with the program [Segment](http://medviso.com/download2/), and [Meshalyzer](https://github.com/cardiosolv/meshalyzer) to visualize FEM. Installation instructions for the programs can be found on their websites.
@@ -15,7 +15,7 @@ Clone and access this repository from a suitable location on your Abel account b
 * All files produced from Segment (.mat format) should be saved in the **seg** folder created from **software.sh**. It is important that the different .mat files are saved as **Patient_1.mat**, **Patient_2.mat**, ..., **Patient_N.mat**. To copy files between Abel and your computer, use scp or rsync: [Abel Faq](http://www.uio.no/english/services/it/research/hpc/abel/help/faq/).
 
 ## Step 3: Generate finite element meshes ##
-* Run **mat2fem.sh** by the command ```$sbatch mat2fem.sh``` to generate the finite element meshes (.elem, .tris, and .pts files). When done, your files should be stored inside the FEM folder. The .msh files are stored in the Surface folder.
+* Run **mat2fem.sh** by the command ```$sbatch mat2fem.sh``` to generate the finite element meshes (.elem, .tris, and .pts files). When done, your files should be stored inside the FEM folder. The .msh files are stored in the Surface folder. You can always check the output file mat2fem_out.txt during the generation, or the error file mat2fem_err.txt.
 
 ## Step 4: Pacing Coordinates ##
 * Use [Meshalyzer](https://github.com/cardiosolv/meshalyzer) to pick out coordinates for the different pacing sites. A detailed description on how to find the coordinates can be found in **Manual/meshalyzer_manual.pdf**. When done, all five coordinates should be stored in a file **stim_coord.dat** inside each patient folder in FEM.
