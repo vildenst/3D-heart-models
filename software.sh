@@ -46,7 +46,7 @@ case "$vtkchoice" in
 esac
 
 export VTK_DIR=$vtk_dir 	#setting path to VTK build
-
+cd $Programs_path
 #Installing ITK
 read -p "Do you want to install ITK (y/n)? " itkchoice
 case "$itkchoice" in
