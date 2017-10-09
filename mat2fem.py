@@ -134,7 +134,7 @@ def mergevtk(i,msh_srf,vtk_srf):
 	msh='{}/Patient_{}.msh'.format(msh_srf,i)
 	out='{}/Patient_{}.out.txt'.format(msh_srf,i)
 	biv_mesh='{}/scripts/biv_mesh.geo'.format(root)
-	gmsh='/usit/abel/u1/vildenst/Programs/gmsh/build/gmsh' 	#path to gmsh
+	gmsh=programs+'/gmsh/build/gmsh' 	#path to gmsh
 	os.system('{} -3 {} -merge {} {} {} -o {} >& {}'.format(
 		gmsh, lv_endo, rv_endo, rv_epi, biv_mesh, msh, out))
 
