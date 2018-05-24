@@ -5,7 +5,7 @@ mkdir -p ./Data/plyFiles
 mkdir -p ./Data/txtFiles
 
 module load python2
-
+export PYTHONPATH=/cluster/home/vildenst/.local/lib/python2.7/site-packages:$PYTHONPATH
 for f in *.txt
 	do
 		python make_surface.py "$f"

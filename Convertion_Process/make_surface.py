@@ -2,7 +2,8 @@
 
 import numpy as np
 import sys,os
- 
+
+os.system("export PYTHONPATH=/cluster/home/vildenst/.local/lib/python2.7/site-packages:$PYTHONPATH") 
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
@@ -156,7 +157,7 @@ if __name__=="__main__":
      
     if len(sys.argv)==2:
         filename_input = sys.argv[1]
-        print "Making surface for",filename_input
+        #print "Making surface for",filename_input
     else:
         filename_input="ARVC004-LVEndo-Frame_1.txt"
         print "Usage: "+sys.argv[0]+" filename_input"
@@ -244,7 +245,7 @@ if __name__=="__main__":
  
     # Write .ply-file
     if user_input["print_ply"]:
-        print "Printing:",filename_output
+        #print "Printing:",filename_output
         writeplyfile(filename_output,nodes_final, tris_final+1)
  
     # Plot data
