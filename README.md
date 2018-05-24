@@ -18,4 +18,4 @@ Clone and access this repository from a suitable location by the following comma
 * Pre-files for the fiber orientation are located in the Files folder, all constructed to fit the fiber generation provided by [CARPentry](https://carp.medunigraz.at/carputils/cme-installation.html). 
 
 ## Step 4: Simulations ##
-* Inside a patient folder which should contain a .pts, .elem, .lon and coordinate file, run ```$sbatch risk_strat_1_16.sh``` to run simulation through [CARP](https://carp.medunigraz.at).
+* Inside a patient folder which should contain a .pts, .elem, .lon and coordinate file, run ```$sbatch risk_strat_1_16.sh``` to run simulations through [CARP](https://carp.medunigraz.at).
