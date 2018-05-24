@@ -2,8 +2,8 @@
 
 The pipeline is currently adjusted to work on [Abel](http://www.uio.no/english/services/it/research/hpc/abel/), a computer cluster with Linux OS. 
 Clone and access this repository from a suitable location by the following commands:
-1. ```$git clone https://github.com/vildenst/In_Silico_Heart_Models.git```.
-2. ```$cd In_Silico_Heart_Models```.
+1. ```$git clone https://github.com/vildenst/3D-heart-models.git```.
+2. ```$cd 3D-heart-models```.
 
 ## Step 1: Software requirements ##
 * [vtk](http://www.vtk.org), [itk](https://itk.org) (must be built with Module_ITKVtkGlue=ON), [gmsh](http://gmsh.info), matlab, numpy, scipy and matplotlib. **software.sh** will install them for you if you don't have them.
