@@ -1,27 +1,21 @@
-# Pipeline for patient specific 3D heart models #
+# Pipeline for generating personalized finite element heart models #
 
-This manual is based on the user having access to [Abel](http://www.uio.no/english/services/it/research/hpc/abel/), a computer cluster with Linux OS. A description of the different files and folders can be found in **Manual/files&folders.md**. An introduction to cardiology is available in **Manual/Cardiology.pdf**.
-Clone and access this repository from a suitable location on your Abel account by the following commands:
-1. ```$git clone https://github.com/vildenst/3D-heart-models.git```.
-2. ```$cd 3D-heart-models```.
+The pipeline is currently adjusted to work on [Abel](http://www.uio.no/english/services/it/research/hpc/abel/), a computer cluster with Linux OS. 
+Clone and access this repository from a suitable location by the following commands:
+1. ```$git clone https://github.com/vildenst/In_Silico_Heart_Models.git```.
+2. ```$cd In_Silico_Heart_Models```.
 
 ## Step 1: Software requirements ##
-* On your computer: A Windows virtual machine with the program [Segment](http://medviso.com/download2/), and [Meshalyzer](https://github.com/cardiosolv/meshalyzer) to visualize FEM. Installation instructions for the programs can be found on their websites.
-* On Abel: [vtk](http://www.vtk.org), [itk](https://itk.org) (must be built with Module_ITKVtkGlue=ON), [gmsh](http://gmsh.info), numpy, scipy and matplotlib. **software.sh** will install them for you if you don't have them.
+* [vtk](http://www.vtk.org), [itk](https://itk.org) (must be built with Module_ITKVtkGlue=ON), [gmsh](http://gmsh.info), matlab, numpy, scipy and matplotlib. **software.sh** will install them for you if you don't have them.
 * Run **software.sh** to create and build some necessary folders and programs: ```$sh software.sh```.
 
 ## Step 2: Segmentation ##
-* Segmentation of MRI images is done in [Segment](http://medviso.com/download2/). For a detailed description on how to segment the images, see **Manual/segment_manual.pdf**.
-* All files produced from Segment (.mat format) should be saved in the **seg** folder created from **software.sh**. It is important that the different .mat files are saved as **Patient_1.mat**, **Patient_2.mat**, ..., **Patient_N.mat**. To copy files between Abel and your computer, use scp or rsync: [Abel Faq](http://www.uio.no/english/services/it/research/hpc/abel/help/faq/).
+* Segmentation of MRI images is preferably performed using [Segment](http://medviso.com/download2/). 
+* All files produced from Segment (.mat format) should be saved in the **seg** folder created from **software.sh**. It is important that the different .mat files are saved as **Patient_1.mat**, **Patient_2.mat**, ..., **Patient_N.mat**.
 
 ## Step 3: Generate finite element meshes ##
-* Run **mat2fem.sh** by the command ```$sbatch mat2fem.sh``` to generate the finite element meshes (.elem, .tris, and .pts files). When done, your files should be stored inside the FEM folder. The .msh files are stored in the Surface folder. You can always check the output file mat2fem_out.txt during the generation, or the error file mat2fem_err.txt.
+* Run **mat2fem.sh** by the command ```$sbatch mat2fem.sh nr_patients``` to generate the finite element files (.elem and .pts files). The argument should be the number of patients included into the **seg** folder. When completed, the files will be stored inside the FEM folder including pacing coordinates.
+* Pre-files for the fiber orientation are located in the Files folder, all constructed to fit the fiber generation provided by [CARPentry](https://carp.medunigraz.at/carputils/cme-installation.html). 
 
-## Step 4: Pacing Coordinates ##
-* Use [Meshalyzer](https://github.com/cardiosolv/meshalyzer) to pick out coordinates for the different pacing sites. A detailed description on how to find the coordinates can be found in **Manual/meshalyzer_manual.pdf**. When done, all five coordinates should be stored in a file **stim_coord.dat** inside each patient folder in FEM.
-
-## Step 5: Create .lon files ##
-* Instructions are coming soon.
-
-## Step 6: Simulations ##
-* You can now start simulations for each patient. Inside a patient folder, run ```$sbatch risk_strat_1_16.sh```. A detailed description on how to analyze the results can be found in **Manual/simulation_manual.pdf**.
+## Step 4: Simulations ##
+* Inside a patient folder which should contain a .pts, .elem, .lon and coordinate file, run ```$sbatch risk_strat_1_16.sh``` to submit simulation jobs.

@@ -21,8 +21,8 @@ echo "Moved Medical_Image_Processing_Toolbox to" $PWD
 
 #loading new modules
 module purge
-module load cmake
-module load gcc
+module load cmake/3.7.1
+module load gcc/7.2.0
 
 #Installing VTK
 read -p "Do you want to install VTK (y/n)? " vtkchoice
@@ -115,7 +115,7 @@ case "$gmshchoice" in
 	rm -rf $root/gmsh
 	read -p "Please specify the path to your gmsh executable: " gmsh_path 	#need users gmsh path
 	cd $root
-	old_gmsh="'{}/gmsh/build/gmsh'.format(os.getenv('HOME')+'/Programs')" 	#original path to gmsh in mat2fem.py
+	old_gmsh="'{}/gmsh/build/gmsh'.format(program)" 	#original path to gmsh in mat2fem.py
 	sed -i -e "s|$old_gmsh|'$gmsh_path'|g" mat2fem.py 		#changed gmsh path in mat2fem.py
 	echo 'Have updated gmsh path in mat2fem.py to '$gmsh_path;;
 	* ) 
@@ -126,15 +126,28 @@ esac
 #installing necessary python packages
 echo "Checking if numpy, scipy and matplotlib are installed ..."
 module purge
-module load python2
+module load python2/2.7.10
+pip install --upgrade pip
 pip install --user numpy
 pip install --user scipy
+pip install --user scikit-learn
 pip install -U matplotlib --user
 
+#For MAC users, a one-liner has to be added to ./bashrc
+read -p "For MAC users  LC_ALL=en_US.UTF-8 should be added to ./bashrc (y/n)?" mac 
+case "$mac" in
+	y|Y|Yes|yes ) 
+	echo "Adding LC_ALL=en_US.UTF-8 to ~/.bashrc"
+	echo "export LC_ALL=en_US.UTF-8" >> "$HOME/.bashrc";;
+	* )
+	echo "Will not add LC_ALL=en_US.UTF-8 to ~/.bashrc."
+	echo "You might get errors later on. Please reconsider adding it manually in that case.";;
+esac
 
 #need to create some empty folders
 seg='seg'
-Surfaces='Surfaces'
+current_pat='seg/current_patient'
+Surfaces='Files'
 FEM='FEM'
 Conv_Data='Convertion_Process/Data/'
 Matlab_Data='Matlab_Process/Data'
@@ -146,7 +159,7 @@ Matlab_text=$Matlab_Data'/Texts'
 Scar_data='Scar_Process/Data'
 
 
-declare -a folders=($seg $Surfaces $Conv_Data $Matlab_Data 
+declare -a folders=($seg $current_pat $Surfaces $Conv_Data $Matlab_Data 
 				$Matlab_align $Matlab_scar $Matlab_seg 
 				$Matlab_text $Scar_data $FEM $Scar_meta)
 

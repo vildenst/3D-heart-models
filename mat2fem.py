@@ -1,32 +1,34 @@
 """
-Created by Vilde N. Strom, July 2017.
-	Simula Research Laboratory
+Created by Vilde N. Strom, July 2017. Last updated May 2018.
 """
 
-import os
-import shutil 
-import datetime
+"""Imports and folder decrelations"""
+import os,glob,shutil,sys,re
 
-now=datetime.datetime.now()
-time = now.strftime("%d.%m-%H.%M")
-Date='Data-'+time	#name of output folder
 
-#Assigning variable names to important folders
-root=os.getcwd()	#path to Heart_Models_folder
+Date='Data-'+str(sys.argv[2])
+pat_nr=int(sys.argv[1])
+patname="Patient_{}".format(pat_nr)
+root=os.getcwd()
 mat_data=root+'/Matlab_Process/Data/'
 mat_scar=mat_data+'ScarImages/MetaImages'
 mat_txt=mat_data+'Texts'
 mat_seg=mat_data+'Seg/'
-surf=root+'/Surfaces/'+Date
+pre_folder=root+'/Files/'+Date
+surf=root+'/Files/'+Date+'/'+patname
 vtk_srf=surf+'/vtkFiles'
 msh_srf=surf+'/mshFiles'
-fem=root+'/FEM/'+Date
+scar_srf=surf+'/scarFiles'
+vtxpath=surf+'/PreFiberFiles'
+pre_fem=root+'/FEM/'+Date
+fem=root+'/FEM/'+Date+'/'+patname
 conv=root+'/Convertion_Process'
 scar=root+'/Scar_Process'
 script=root+'/scripts/'
 program=os.getenv('HOME')+'/Programs'
+gmsh='/usit/abel/u1/vildenst/Programs/gmsh/build/gmsh' 
 
-""" PART 1: MATLAB SLICE ALIGNMENT """
+""" FUNCTIONS PART 1: MATLAB SLICE ALIGNMENT """
 #running the matlab script alignAll.m
 def run_matlab(nr_errors,err_list):
 	os.system('sh run_matlab.sh')	
@@ -50,7 +52,8 @@ def remove_error_files(fname):
 		if os.path.isfile('{}/{}-{}-Frame_1.txt'.format(mat_txt,fname,i)):
 			os.remove('{}/{}-{}-Frame_1.txt'.format(mat_txt,fname,i))
 
-source ='{}/seg/'.format(root) #.mat files source path
+""" PART 1: MATLAB SLICE ALIGNMENT """
+source ='{}/seg/current_patient/'.format(root) #.mat files source path
 files=os.listdir(source)
 N=len(files)	#number of .mat files to be processed
 nr_errors=0
@@ -64,12 +67,13 @@ if err_list:	#errors occured
 	for nr in err_list:
 		fname='Patient_{}'.format(nr)
 		remove_error_files(fname)
-		os.system('echo {} was removed due to errors. Will continue without it.'.format(fname))
+		os.system('echo Patient was removed due to errors. Will continue without it.')
+		sys.exit(1)
 
 os.system('echo PART 1 DONE: SLICES ALIGNED')
 
 
-""" PART 2: SURFACE GENERATION """
+""" FUNCTIONS PART 2: SURFACE GENERATION """
 #moves all files in a directory
 def move(src,dst):
 	src_files=os.listdir(src)
@@ -89,8 +93,21 @@ def remove(folder_list):
 		for f in files:
 			os.remove(mat_data+i+f)
 
+
+#rename to correct patient number
+def rename(folder,nr,filetype):
+	os.chdir(folder)
+	for f in glob.glob('*.{}'.format(filetype)):
+		newname=re.sub("(?:Patient_1)","Patient_"+str(nr),f)
+		shutil.move(f,newname)
+	os.chdir(root)
+
+
+""" PART 2: SURFACE GENERATION """
 #creating new output folder for the surface data
-os.system('echo Creating folder {} for data storage'.format(Date))
+os.system('echo Creating folder {} for data storage'.format(surf))
+if not os.path.exists(pre_folder):
+	os.mkdir(pre_folder)
 os.mkdir(surf)
 
 #moving and deleting files before starting surface generation
@@ -104,13 +121,15 @@ run(conv,'make_surface_all.sh')
 os.system('echo Moving files to Surfaces')
 for i in ['plyFiles','vtkFiles','txtFiles']:
 	os.chdir(conv+'/Data/'+i)
-	os.mkdir(surf+'/'+i)
-	move(os.getcwd(),surf+'/'+i)
+	folder=surf+'/'+i
+	os.mkdir(folder)
+	move(os.getcwd(),folder)	
+
 
 #generating and moving scar surfaces
 os.system('echo Making scar surfaces')
 run(scar,'run.sh')
-os.system('echo Moving scar files to Surfaces')
+os.system('echo Moving scar files')
 src=os.listdir(scar+'/Data')
 for f in src:
 	if f.endswith('.vtk'):
@@ -118,14 +137,14 @@ for f in src:
 	else:
 		os.remove(scar+'/Data/'+f)
 
-os.system('echo All .vtk files are stored in Surfaces/{}/vtkFiles'.format(Date))
-os.system('echo PART 2 DONE: MAKING SURFACES')
+for filetype in ['txt','ply','vtk']:
+	rename(surf+'/'+filetype+'Files',pat_nr,filetype)
 
-""" PART 3: GENERATION OF FEM FILES """
-os.mkdir(msh_srf)	#storing msh and msh output files here
-os.mkdir(fem)	#storing pts, elem and tris files here
-shutil.copyfile('{}remove_site_times.py'.format(script),fem+'/remove_site_times.py')
+os.system('echo All .vtk files are stored in Files/{}/{}/vtkFiles'.format(Date,patname))
+os.system('echo PART 2 DONE: VTK SURFACES GENERATED')
 
+
+""" FUNCTIONS PART 3: GENERATION OF MODELS & CARP FILES"""
 #Generating .msh files from .vtk files
 def mergevtk(i,msh_srf,vtk_srf):	
 	lv_endo='{}/Patient_{}-LVEndo-Frame_1.vtk'.format(vtk_srf,i)
@@ -134,66 +153,103 @@ def mergevtk(i,msh_srf,vtk_srf):
 	msh='{}/Patient_{}.msh'.format(msh_srf,i)
 	out='{}/Patient_{}.out.txt'.format(msh_srf,i)
 	biv_mesh='{}/scripts/biv_mesh.geo'.format(root)
-	gmsh=programs+'/gmsh/build/gmsh' 	#path to gmsh
 	os.system('{} -3 {} -merge {} {} {} -o {} >& {}'.format(
 		gmsh, lv_endo, rv_endo, rv_epi, biv_mesh, msh, out))
 
-#function for generating pts, elem and tris files from msh files
+#function for generating pts, elem files from msh files
 def write_fem(input_file,outputname):
-	infile=open(input_file,'r')
-	outfile_pts=open(outputname+'.pts','w')
-	outfile_elem=open(outputname+'.elem','w')
-	outfile_tris=open(outputname+'.tris','w')
-	start_pts=False
-	end_pts=False
-	start_elem=False
-	end_elem=False
-	elem_count=0
-	for line in infile:
-		words=line.split()
-		#pts part
-		#write_pts(start_pts,end_pts,words,outfile_pts)
-		if words[0]=='$Nodes':
-			start_pts=True
-			continue
-		if words[0]=='$EndNodes':
-			end_pts=True
-		if start_pts==True and end_pts==False:
-			if len(words)==1:	#first line to write
-				outfile_pts.write('{}\n'.format(words[0]))
-			else:
-				outfile_pts.write('{} {} {}\n'.format(words[1],words[2],words[3]))
-		#elem and tris part
-		#write_elem(start_elem,end_elem,words,outfile_elem,outfile_tris)
-		if words[0]=='$Elements':
-			start_elem=True
-			continue 	#jumping to next line
-		if words[0]=='$EndElements':
-			end_elem=True
-		if start_elem==True and end_elem==False:
-			if len(words)==1:	#first line to write
-				outfile_elem.write('{}\n'.format('NR_ELEMENTS')) #writing up nr of elements
-			elif len(words)>7:
-				i=int(words[5])-1
-				j=int(words[6])-1
-				k=int(words[7])-1
-				if words[1]=='2':
-					outfile_tris.write('{} {} {} 1\n'.format(i,j,k))
-				elif words[1]=='4':
-					elem_count+=1
-					l=int(words[8])-1
-					outfile_elem.write('Tt {} {} {} {} 1\n'.format(i,j,k,l))
-	infile.close()
-	outfile_pts.close()
-	outfile_elem.close()
-	outfile_tris.close()
-	elem_name=outputname+'.elem'
-	os.system('sed -i -e "s|NR_ELEMENTS|{}|g" {}'.format(elem_count,elem_name))
+	os.system('python {}write_fem.py {} {}'.format(script,input_file,outputname))
+
+def enough_scar(scarvol):
+	counter=0
+	for line in open(scarvol).xreadlines():
+		counter+=1
+		if counter>3000:
+			return True
+	return False
+
+def incorporate_scar(i,surfmsh,volmsh,patient_path,regfile):
+	#generate CARP files of scar and move to scarFiles
+	surfname='Patient_{}_scarsurf'.format(i)
+	volname='Patient_{}_scarvol'.format(i)
+	write_fem(surfmsh,surfname)
+	write_fem(volmsh,volname)
+	for j in ['elem', 'pts']:
+		os.rename('{}.{}'.format(surfname,j),'{}/{}.{}'.format(scar_srf,surfname,j))
+		os.rename('{}.{}'.format(volname,j),'{}/{}.{}'.format(scar_srf,volname,j))
+
+	#find element centers of heart model and move to scarFiles
+	os.system('python {}elemcenters.py {}/Patient_{}'.format(script,msh_srf,i))
+	centers='{}/Patient_{}_centers.dat'.format(scar_srf,i)
+	os.rename('elemcenters.dat',centers)
+
+	#generate scar regions
+	surfpath=scar_srf+'/'+surfname
+	volpath=scar_srf+'/'+volname
+	os.system('python {}generate_regions.py {} {} {}'.format(script,surfpath,volpath,i))
+	regions='{}/Patient_{}_regions.dat'.format(scar_srf,i)
+	os.rename('done.pts',regions)
+	os.rename(regfile,'{}/{}'.format(scar_srf,regfile))
+
+	#include scar regions into elem file
+	args='{} {} {} {}/Patient_{}'.format(surfpath,centers,regions,msh_srf,i)
+	os.system('python {}connect_meshes.py {}'.format(script,args))
+	src='{}/Patient_{}.elem'.format(msh_srf,i)
+	dst='{}/Patient_{}.elem'.format(patient_path,i)
+	os.rename(src,dst)
+
+def includescar(i,patient_path):
+	os.chdir(msh_srf)
+	scarvtk=vtk_srf+'/Patient_{}_scar.vtk'.format(i)
+	surf_geo=script+'scar_surf.geo'
+	vol_geo=script+'scar_vol.geo'
+	surfmsh="{}/Patient_{}_scarsurf.msh".format(msh_srf,i)
+	volmsh="{}/Patient_{}_scarvol.msh".format(msh_srf,i)
+	surfout='{}/Patient_{}_scarsurf.out.txt'.format(msh_srf,i)
+	volout='{}/Patient_{}_scarvol.out.txt'.format(msh_srf,i)
+
+	#generate Finite element surface and volume of scar
+	os.system('{} -3 {} {} -o {} >& {}'.format(gmsh,scarvtk,surf_geo,surfmsh,surfout))
+	os.system('{} -3 {} {} -o {} >& {}'.format(gmsh,scarvtk,vol_geo,volmsh,volout))
+
+	regfile='nr_regions_Patient_{}.dat'.format(i)
+	if enough_scar(volmsh):
+		incorporate_scar(i,surfmsh,volmsh,patient_path,regfile)
+	else:
+		os.system('echo Remark: No scar tissue for Patient {}'.format(i))
+		nr_reg_out=open('{}/{}'.format(scar_srf,regfile),'w')
+		nr_reg_out.write('1\n')
+		nr_reg_out.close()
+		name='Patient_{}.elem'.format(i)
+		os.rename('{}/{}'.format(msh_srf,name), '{}/{}'.format(patient_path,name))
+	return regfile
+
+def multiplypts(i,patient_path):
+	os.system('python {}multiply_pts.py {}/Patient_{}'.format(script,msh_srf,i))
+	src='{}/Patient_{}.pts'.format(msh_srf,i)
+	dst='{}/Patient_{}_original.pts'.format(msh_srf,i)
+	os.rename(src,dst)
+	src='{}/Patient_{}_new.pts'.format(msh_srf,i)
+	dst='{}/Patient_{}.pts'.format(patient_path,i)
+	os.rename(src,dst)
+
+def vtxgeneration(i):
+	os.chdir(vtxpath)
+	tmp='Patient_{}'.format(i)
+	os.system('python {}vtx_generation.py {}/Patient_{}'.format(script,msh_srf,i))
+	os.system('sh {}fix_elem_prelon.sh {} {}/{}'.format(script,tmp,patient_path,tmp))
+	shutil.copyfile(script+'run.sh',vtxpath+'/run.sh')
+
+def pargeneration(patient_path,regfile):
+	regionfile=open('{}/{}'.format(scar_srf,regfile),'r')
+	nr_reg=regionfile.readline().strip()
+	regionfile.close()
+	os.system('python {}create_par.py {} {}'.format(script,nr_reg,script))
+	os.rename('base.par','{}/base.par'.format(patient_path))
+
 
 #Adjusting and moving files to each patient folder
 def write_files(pat_path,i):
-	shutil.copyfile('{}stim_coord.dat'.format(script),pat_path+'/stim_coord.dat')
-	shutil.copyfile('{}base.par'.format(script),pat_path+'/base.par')
 	infile=open('{}risk_strat_1_16.sh'.format(script),'r').readlines()
 	outfile=open(pat_path+'/risk_strat_1_16.sh','w')
 	new_jobid='#SBATCH --job-name=Pat_{}'.format(i)
@@ -204,24 +260,66 @@ def write_files(pat_path,i):
 			outfile.write(new_jobid+'\n')	#changes jobid to current patient
 	outfile.close()
 
-for i in range(1,N+1):
-	if os.path.isfile('{}/Patient_{}_scar.vtk'.format(vtk_srf,i)):	#patient exists
-		mergevtk(i,msh_srf,vtk_srf)	#generation of .msh files
-		os.system('echo Generated .msh file for Patient {}.'.format(i))
 
-		#generating pts, tris and elem files from msh files
-		write_fem('{}/Patient_{}.msh'.format(msh_srf,i),'Patient_{}'.format(i))
-		os.system('echo Generated .tris, .elem and .pts file for Patient {}.'.format(i))
+def reorder(i,patpath):
+	os.system('python {}reorder_axis.py {} {} Patient_{}'.format(script,msh_srf,patpath,i))
+	for f in ['reorder','pts','elem']:
+		name='Patient_{}_reorder.{}'.format(i,f)
+		os.rename(name,'{}/{}'.format(patpath,name))
 
-		#moving FEM files to correct folder
-		patient_path='{}/Patient_{}'.format(fem,i)
-		os.mkdir(patient_path)
-		for j in ['tris', 'elem', 'pts']:
-			os.rename('Patient_{}.{}'.format(i,j), '{}/Patient_{}.{}'.format(patient_path,i,j))
+def findcoordinates(i,patpath):
+	os.system('python {}find_coord.py Patient_{} {} {}'.format(script,i,msh_srf,patpath))
+	os.rename('stim_coord.dat','{}/stim_coord.dat'.format(patpath))
 
-		#creating stim_coord.dat and rist_strat_1_16.sh in each patient folder
-		write_files(patient_path,i)
+def fix_vtx(i,patpath):
+	os.system('python {}fix_vtx.py {}/Patient_{}_reorder {}'.format(script,patpath,i,vtxpath))
+	for tmp in ['base','epi','lv','rv','apex']:
+		os.rename(tmp+'.vtx','{}/{}.vtx'.format(vtxpath,tmp))
 
-os.system('echo All .msh and .out.txt files are stored in Surfaces/mshFiles')
-os.system('echo All FEM files are stored in FEM/Data-{}'.format(time))
-os.system('echo PART 3 DONE: GENERATED FEM MODELS')
+""" PART 3: GENERATION OF MODELS AND CARP FILES"""
+for f in [msh_srf,pre_fem,fem,scar_srf,vtxpath]:
+	if not os.path.exists(f):
+		os.mkdir(f)
+
+i=int(pat_nr)
+if os.path.isfile('{}/Patient_{}_scar.vtk'.format(vtk_srf,i)):	#patient exists
+	os.system('echo Creating a finite element mesh for Patient {}, may take some time...'.format(i))
+	os.system('echo The finite element generation progress can be inspected in Files/{}/{}/mshFiles'.format(Date,patname))
+	mergevtk(i,msh_srf,vtk_srf)	#generation of .msh files
+	os.system('echo Generated .msh file for Patient {}.'.format(i))
+
+	#generating pts, tris and elem files from msh files
+	os.system('echo Generating CARP files for Patient {}'.format(i))
+	write_fem('{}/Patient_{}.msh'.format(msh_srf,i),'Patient_{}'.format(i))
+	patient_path=fem
+	for j in ['elem', 'pts']:
+		os.rename('Patient_{}.{}'.format(i,j), '{}/Patient_{}.{}'.format(msh_srf,i,j))
+
+	#including scar 
+	os.system('echo Including scar tissue into the model for Patient {}'.format(i))
+	regfile = includescar(i,patient_path)
+
+	multiplypts(i,patient_path)
+	os.system('echo Generating pre-fiber orientation files in Files/{}/{}/PreFiberFiles'.format(Date,patname))
+	vtxgeneration(i)
+	os.system('echo Generating a patient specific paramater file')
+	pargeneration(patient_path,regfile)
+	write_files(patient_path,i)
+	reorder(i,patient_path)
+	for j in ['elem', 'pts']:
+		name='Patient_{}.{}'.format(i,j)
+		os.rename('{}/{}'.format(patient_path,name), '{}/{}'.format(msh_srf,name))
+	findcoordinates(i,patient_path)
+	fix_vtx(i,patient_path)
+		
+
+		
+
+os.system('echo PART 3 DONE: GENERATED MODELS AND NECESSARY CARP FILES')
+os.system('echo ==========PROCESS COMPLETE=============')
+os.system('echo All .msh and .out.txt files are stored in Files/{}/{}/mshFiles'.format(Date,patname))
+os.system('echo All scar generation files are stored in Files/{}/{}/scarFiles'.format(Date,patname))
+os.system('echo All pre-fiber orientation files are stored in Files/{}/{}/PreFiberFiles'.format(Date,patname))
+os.system('echo All CARP files are stored in FEM/{}/{}'.format(Date,patname))
+os.system('echo =======================================')
+
