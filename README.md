@@ -6,7 +6,7 @@ Clone and access this repository from a suitable location by the following comma
 2. ```$cd 3D-heart-models```.
 
 ## Step 1: Software requirements ##
-* [vtk](http://www.vtk.org), [itk](https://itk.org) (must be built with Module_ITKVtkGlue=ON), [gmsh](http://gmsh.info), matlab, numpy, scipy and matplotlib. **software.sh** will install them for you if you don't have them.
+* [vtk](http://www.vtk.org) version 8.0.0, [itk](https://itk.org) (must be built with Module_ITKVtkGlue=ON) version 4.12.0, [gmsh](http://gmsh.info) version 2.13.1, matlab version 2017A, python version 2.7.10 including numpy, scipy and matplotlib. **software.sh** will install them for you if you don't have them.
 * Run **software.sh** to create and build some necessary folders and programs: ```$sh software.sh```.
 
 ## Step 2: Segmentation ##
